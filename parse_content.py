@@ -47,8 +47,9 @@ MONTHS = {
 
 
 def parse_date(header):
+    header_upper = unidecode.unidecode(header).upper()
     regex = r'(\d{1,2}).*(' + '|'.join(MONTHS.keys()) + r').*(\d{4})'
-    match = re.search(regex, header, re.IGNORECASE)
+    match = re.search(regex, header_upper, re.IGNORECASE)
     day, month, year = match.groups()
     day = int(day)
     month = MONTHS[month.upper()]
@@ -125,7 +126,7 @@ class Document:
 
 
 if __name__ == '__main__':
-    with open("html/2018010056.html", 'rb') as f:
+    with open("html/2010031485.html", 'rb') as f:
         doc = Document(f.read())
 
     print(doc)
