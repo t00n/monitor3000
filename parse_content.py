@@ -21,7 +21,7 @@ MONTHS = {
 
 def parse_date(header):
     d = header.split('-')[0].strip()
-    day, month, year = d.split(' ')
+    day, month, year = d.split(' ')[:3]
     day = "%02d" % int(day)
     month = "%02d" % MONTHS[month]
     year = year[:4]
@@ -80,7 +80,6 @@ def parse_articles(text):
 class Document:
     def __init__(self, html):
         self._html = html
-        print(html)
         self.parse_html()
 
     def parse_html(self):
