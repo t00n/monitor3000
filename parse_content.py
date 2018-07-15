@@ -22,7 +22,8 @@ MONTHS = {
 def parse_date(header):
     d = header.split('-')[0].strip()
     day, month, year = d.split(' ')
-    month = MONTHS[month]
+    day = "%02d" % int(day)
+    month = "%02d" % MONTHS[month]
     year = year[:4]
     return "{}-{}-{}".format(year, month, day)
 
@@ -89,19 +90,9 @@ class Document:
         self.title = parse_title(header)
         content = parse_content(soup)
         self.cleansed_text = header + '\n' + content
-        self.authority, self.references = parse_prelude(content)
-        self.articles = parse_articles(content)
 
     def __str__(self):
-        res = self.date
-        res += ' - ' + self.title + '\n\n'
-        res += self.authority + ',\n'
-        res += ";\n".join(self.references)
-        res += ',\n'
-        res += "Arrête :\n"
-        for i, art in enumerate(self.articles):
-            res += "Art {}. {}\n".format(i + 1, art)
-        return res
+        return "<Document date={} title={}>".format(self.date, self.title)
 
 
 if __name__ == '__main__':
