@@ -99,47 +99,48 @@ DOCUMENT_TYPES = [
     "UNIONS PROFESSIONNELLES",
 ]
 
-index = defaultdict(lambda: [])
+if __name__ == '__main__':
+    index = defaultdict(lambda: [])
 
-for dt in tqdm(DOCUMENT_TYPES):
-    # get n_results
-    data = copy(search_data)
-    data.append(('dt', dt))
-    response = requests.post('http://www.ejustice.just.fgov.be/cgi/rech.pl', headers=headers, params=search_params, data=data)
-    soup = BeautifulSoup(response.content, 'html.parser')
-    n_results = int(list(list(soup.select('table')[0].children)[1].children)[1].text)
-
-    # iter result pages
-    for i in tqdm(range(1, n_results + 1, 100)):
-        params = copy(list_params)
-        params.append(
-            ('sql', 'dt = \'{}\' and dd between date\'1800-01-01\' and date\'2020-01-01\'  and pd between date\'1800-01-01\' and date\'2020-01-01\' '.format(dt))
-        )
-        params.append(
-            ('rech', '{}'.format(n_results))
-        )
-        params.append(
-            ('dt', '{}'.format(dt))
-        )
-        params.append(
-            ('row_id', i)
-        )
-        response = requests.get('http://www.ejustice.just.fgov.be/cgi/list_body.pl', headers=headers, params=params)
+    for dt in tqdm(DOCUMENT_TYPES):
+        # get n_results
+        data = copy(search_data)
+        data.append(('dt', dt))
+        response = requests.post('http://www.ejustice.just.fgov.be/cgi/rech.pl', headers=headers, params=search_params, data=data)
         soup = BeautifulSoup(response.content, 'html.parser')
-        # iter on entries
-        for form in soup.select('form[action=article.pl]'):
-            row = {}
-            # lots of data are contained in a form, ready to be sent to redirect to the article page
-            for input in form.select('input'):
-                row[input.attrs['name']] = input.attrs['value']
-            url = 'http://www.ejustice.just.fgov.be/cgi/article_body.pl?numac={}&caller={}&pub_date={}&language={}'.format(
-                row['numac'],
-                row['caller'],
-                row['pub_date'],
-                row['language'],
-            )
-            row['url'] = url
-            index[dt].append(row)
+        n_results = int(list(list(soup.select('table')[0].children)[1].children)[1].text)
 
-with open("index.json", "w") as f:
-    json.dump(index, f)
+        # iter result pages
+        for i in tqdm(range(1, n_results + 1, 100)):
+            params = copy(list_params)
+            params.append(
+                ('sql', 'dt = \'{}\' and dd between date\'1800-01-01\' and date\'2020-01-01\'  and pd between date\'1800-01-01\' and date\'2020-01-01\' '.format(dt))
+            )
+            params.append(
+                ('rech', '{}'.format(n_results))
+            )
+            params.append(
+                ('dt', '{}'.format(dt))
+            )
+            params.append(
+                ('row_id', i)
+            )
+            response = requests.get('http://www.ejustice.just.fgov.be/cgi/list_body.pl', headers=headers, params=params)
+            soup = BeautifulSoup(response.content, 'html.parser')
+            # iter on entries
+            for form in soup.select('form[action=article.pl]'):
+                row = {}
+                # lots of data are contained in a form, ready to be sent to redirect to the article page
+                for input in form.select('input'):
+                    row[input.attrs['name']] = input.attrs['value']
+                url = 'http://www.ejustice.just.fgov.be/cgi/article_body.pl?numac={}&caller={}&pub_date={}&language={}'.format(
+                    row['numac'],
+                    row['caller'],
+                    row['pub_date'],
+                    row['language'],
+                )
+                row['url'] = url
+                index[dt].append(row)
+
+    with open("index.json", "w") as f:
+        json.dump(index, f)

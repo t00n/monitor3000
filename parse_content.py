@@ -1,6 +1,9 @@
 import re
 
 from bs4 import BeautifulSoup
+import unidecode
+
+from scrap_index import DOCUMENT_TYPES
 
 
 MONTHS = {
@@ -16,20 +19,49 @@ MONTHS = {
     'OCTOBRE': 10,
     'NOVEMBRE': 11,
     'DECEMBRE': 12,
+    'JANUARI': 1,
+    'FEBRUARI': 2,
+    'MAART': 3,
+    'APRIL': 4,
+    'MEI': 5,
+    'JUNI': 6,
+    'JULI': 7,
+    'AUGUSTUS': 8,
+    'SEPTEMBER': 9,
+    'OKTOBER': 10,
+    'NOVEMBER': 11,
+    'DECEMBER': 12,
+    'JANUAR': 1,
+    'FEBRUAR': 2,
+    'MARZ': 3,
+    'APRIL': 4,
+    'MAI': 5,
+    'JUNI': 6,
+    'JULI': 7,
+    'AUGUST': 8,
+    'SEPTEMBER': 9,
+    'OKTOBER': 10,
+    'NOVEMBER': 11,
+    'DEZEMBER': 12,
 }
 
 
 def parse_date(header):
-    d = header.split('-')[0].strip()
-    day, month, year = d.split(' ')[:3]
-    day = "%02d" % int(day)
-    month = "%02d" % MONTHS[month]
-    year = year[:4]
-    return "{}-{}-{}".format(year, month, day)
+    regex = r'(\d{1,2}).*(' + '|'.join(MONTHS.keys()) + r').*(\d{4})'
+    match = re.search(regex, header, re.IGNORECASE)
+    day, month, year = match.groups()
+    day = int(day)
+    month = MONTHS[month.upper()]
+    year = int(year)
+    return "%04d-%02d-%02d" % (year, month, day)
 
 
 def parse_title(header):
-    return header.split('-')[1].strip()
+    header_upper = unidecode.unidecode(header).upper()
+    regex = r'(' + '|'.join(DOCUMENT_TYPES) + r')'
+    match = re.search(regex, header_upper)
+    index = match.start(0)
+    return header[index:]
 
 
 def parse_content(soup):
@@ -87,8 +119,6 @@ class Document:
         header = soup.select('h3 > center > u')[0].text
         self.date = parse_date(header)
         self.title = parse_title(header)
-        content = parse_content(soup)
-        self.cleansed_text = header + '\n' + content
 
     def __str__(self):
         return "<Document date={} title={}>".format(self.date, self.title)
