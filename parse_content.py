@@ -46,21 +46,24 @@ MONTHS = {
 }
 
 
+DATE_REGEX = r'(\d{1,2}).*(' + '|'.join(MONTHS.keys()) + r').*(\d{4})'
+
+
 def parse_date(header):
     header_upper = unidecode.unidecode(header).upper()
-    regex = r'(\d{1,2}).*(' + '|'.join(MONTHS.keys()) + r').*(\d{4})'
-    match = re.search(regex, header_upper, re.IGNORECASE)
+    match = re.search(DATE_REGEX, header_upper)
     day, month, year = match.groups()
     day = int(day)
     month = MONTHS[month.upper()]
     year = int(year)
     return "%04d-%02d-%02d" % (year, month, day)
 
+TITLE_REGEX = r'(' + '|'.join(DOCUMENT_TYPES) + r')'
+
 
 def parse_title(header):
     header_upper = unidecode.unidecode(header).upper()
-    regex = r'(' + '|'.join(DOCUMENT_TYPES) + r')'
-    match = re.search(regex, header_upper)
+    match = re.search(TITLE_REGEX, header_upper)
     index = match.start(0)
     return header[index:]
 
