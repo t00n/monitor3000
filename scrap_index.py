@@ -1,4 +1,4 @@
-import json
+import os
 from copy import copy
 from collections import defaultdict
 
@@ -112,35 +112,28 @@ if __name__ == '__main__':
 
         # iter result pages
         for i in tqdm(range(1, n_results + 1, 100)):
-            params = copy(list_params)
-            params.append(
-                ('sql', 'dt = \'{}\' and dd between date\'1800-01-01\' and date\'2020-01-01\'  and pd between date\'1800-01-01\' and date\'2020-01-01\' '.format(dt))
-            )
-            params.append(
-                ('rech', '{}'.format(n_results))
-            )
-            params.append(
-                ('dt', '{}'.format(dt))
-            )
-            params.append(
-                ('row_id', i)
-            )
-            response = requests.get('http://www.ejustice.just.fgov.be/cgi/list_body.pl', headers=headers, params=params)
-            soup = BeautifulSoup(response.content, 'html.parser')
-            # iter on entries
-            for form in soup.select('form[action=article.pl]'):
-                row = {}
-                # lots of data are contained in a form, ready to be sent to redirect to the article page
-                for input in form.select('input'):
-                    row[input.attrs['name']] = input.attrs['value']
-                url = 'http://www.ejustice.just.fgov.be/cgi/article_body.pl?numac={}&caller={}&pub_date={}&language={}'.format(
-                    row['numac'],
-                    row['caller'],
-                    row['pub_date'],
-                    row['language'],
-                )
-                row['url'] = url
-                index[dt].append(row)
 
-    with open("index.json", "w") as f:
-        json.dump(index, f)
+            dirname = os.path.join("raw", "index", dt)
+            filename = os.path.join(dirname, "%08d.html" % i)
+
+            if not os.path.exists(filename):
+                if not os.path.isdir(dirname):
+                    os.mkdir(dirname)
+
+                params = copy(list_params)
+                params.append(
+                    ('sql', 'dt = \'{}\' and dd between date\'1800-01-01\' and date\'2020-01-01\'  and pd between date\'1800-01-01\' and date\'2020-01-01\' '.format(dt))
+                )
+                params.append(
+                    ('rech', '{}'.format(n_results))
+                )
+                params.append(
+                    ('dt', '{}'.format(dt))
+                )
+                params.append(
+                    ('row_id', i)
+                )
+                response = requests.get('http://www.ejustice.just.fgov.be/cgi/list_body.pl', headers=headers, params=params)
+
+                with open(filename, "wb") as f:
+                    f.write(response.content)
