@@ -12,8 +12,7 @@ for dirname in tqdm(os.listdir("raw/index")):
         content = open(os.path.join("raw", "index", dirname, filename), "rb").read()
         soup = BeautifulSoup(content, 'html.parser')
         # iter on entries
-        for form in soup.select('form\[action\=article.pl\]'):
-            print(form)
+        for form in soup.select('form[action=article\.pl]'):
             row = {}
             # lots of data are contained in a form, ready to be sent to redirect to the article page
             for input in form.select('input'):

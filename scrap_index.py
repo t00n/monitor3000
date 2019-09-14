@@ -135,5 +135,11 @@ if __name__ == '__main__':
                 )
                 response = requests.get('http://www.ejustice.just.fgov.be/cgi/list_body.pl', headers=headers, params=params)
 
-                with open(filename, "wb") as f:
-                    f.write(response.content)
+                try:
+                    with open(filename, "wb") as f:
+                        f.write(response.content)
+                except KeyboardInterrupt:
+                    try:
+                        os.remove(filename)
+                    except FileNotFoundError:
+                        pass
