@@ -89,7 +89,10 @@ def parse_content(soup):
 
 
 def parse_prelude(text):
-    prelude, _ = text.split('Article 1er.')
+    try:
+        prelude, _ = text.split('Article 1er.')
+    except:
+        prelude, _ = text.split('Article 1')
     splitted = prelude.split('\n')
     authority = splitted[0][:-1]
     references = [x[:-1] for x in splitted[1:-2]]
@@ -102,6 +105,9 @@ def parse_articles(text):
     for line in text.split('\n'):
         if line.startswith('Article 1er.'):
             articles.append(line[13:] + '\n')
+            i += 1
+        elif line.startswith('Article 1.'):
+            articles.append(line[11:] + '\n')
             i += 1
         else:
             match = re.match(r'Art.[\s\n]+\d+.', line)
@@ -120,16 +126,27 @@ class Document:
 
     def parse_html(self):
         soup = BeautifulSoup(self._html, 'html.parser')
+        # header
         header = soup.select('h3 > center > u')[0].text
         self.date = parse_date(header)
         self.title = parse_title(header)
+
+        # content
+        self.content = parse_content(soup)
+        self.authority, self.references = parse_prelude(self.content)
+        self.articles = parse_articles(self.content)
 
     def __str__(self):
         return "<Document date={} title={}>".format(self.date, self.title)
 
 
 if __name__ == '__main__':
-    with open("html/2010031485.html", 'rb') as f:
+    with open('raw/content/ARRETE MINISTERIEL/1997000605.html', 'rb') as f:
         doc = Document(f.read())
 
-    print(doc)
+    print("DATE", doc.date)
+    print("TITLE", doc.title)
+    print("CONTENT", doc.content)
+    print("AUTHORITY", doc.authority)
+    print("REFS", doc.references)
+    print("ARTICLES", doc.articles)
