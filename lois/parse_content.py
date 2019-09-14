@@ -92,7 +92,7 @@ def parse_content(soup):
 def parse_prelude(text):
     prelude = None
 
-    for splitter in ['Article 1er.', 'Article 1.', 'Art. 1.', 'Convienne']:
+    for splitter in ['Article 1er.', 'Article 1.', 'Art. 1.', 'Convienne', 'Article unique', 'Article Unique']:
         try:
             prelude, _ = text.split(splitter)
             break
@@ -117,16 +117,14 @@ def parse_articles(text):
     articles = []
     i = -1
     for line in text.split('\n'):
-        if line.startswith('Article 1er.'):
-            articles.append(line[13:] + '\n')
-            i += 1
-        elif line.startswith('Article 1.'):
-            articles.append(line[11:] + '\n')
-            i += 1
-        elif line.startswith('Art. 1.'):
-            articles.append(line[9:] + '\n')
-            i += 1
-        else:
+        line = line.strip()
+        first_article = False
+        for start in ['Article 1er.', 'Article 1.', 'Art. 1.', 'Article unique', 'Article Unique']:
+            if line.startswith(start):
+                articles.append(line[len(start) + 1:] + '\n')
+                first_article = True
+
+        if not first_article:
             match = re.match(r'Art.[\s\n]+\d+.', line)
             if match:
                 articles.append(line[len(match.group(0)) + 1:] + '\n')
@@ -137,9 +135,12 @@ def parse_articles(text):
 
 
 class Document:
-    def __init__(self, html):
-        self._html = html
-        self.parse_html()
+    @staticmethod
+    def from_html(html):
+        doc = Document()
+        doc._html = html
+        doc.parse_html()
+        return doc
 
     def parse_html(self):
         soup = BeautifulSoup(self._html, 'html.parser')
@@ -158,27 +159,48 @@ class Document:
 
 
 if __name__ == '__main__':
-    with open('raw/content/ARRETE MINISTERIEL/1997000605.html', 'rb') as f:
-        doc = Document(f.read())
+    import sys
 
-    for dt in os.listdir("raw/content"):
-        dirname = os.path.join("raw", "content", dt)
+    if len(sys.argv) == 2:
+        filename = sys.argv[1]
 
-        for filename in os.listdir(dirname):
-            filename = os.path.join(dirname, filename)
+        with open(filename, 'rb') as f:
+            doc = Document.from_html(f.read())
 
-            print(filename)
-
-            with open(filename, 'rb') as f:
-                doc = Document(f.read())
-
-            print(doc)
+            print(doc.date, doc.title)
             print(doc.authorities)
             print(doc.references)
+            print(doc.articles)
 
-            # print("DATE", doc.date)
-            # print("TITLE", doc.title)
-            # print("CONTENT", doc.content)
-            # print("AUTHORITY", doc.authorities)
-            # print("REFS", doc.references)
-            # print("ARTICLES", doc.articles)
+    else:
+        for dt in os.listdir("raw/content"):
+            dirname = os.path.join("raw", "content", dt)
+
+            for filename in os.listdir(dirname):
+                filename = os.path.join(dirname, filename)
+
+                # print(filename)
+
+                with open(filename, 'rb') as f:
+                    doc = Document.from_html(f.read())
+
+                # print(doc)
+                # print(doc.authorities)
+                # print(doc.references)
+
+                if not doc.authorities or not doc.references or not doc.articles:
+                    print("### AUTHORITIES ###")
+                    print(doc.authorities)
+                    print("### REFERENCES ###")
+                    print(doc.references)
+                    print("### ARTICLES ###")
+                    print(doc.articles)
+                    print("### CONTENT ###")
+                    print(doc.content)
+
+                # print("DATE", doc.date)
+                # print("TITLE", doc.title)
+                # print("CONTENT", doc.content)
+                # print("AUTHORITY", doc.authorities)
+                # print("REFS", doc.references)
+                # print("ARTICLES", doc.articles)
