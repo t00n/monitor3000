@@ -1,0 +1,5 @@
+requests
+beautifulsoup4
+ipython
+html5lib
+tqdm
