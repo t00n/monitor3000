@@ -40,11 +40,11 @@ if __name__ == '__main__':
         os.makedirs(BASEDIR)
 
     delta = (END - START).days
-    for dt in tqdm(range(delta)):
+    for dt in tqdm(range(delta), desc="Days"):
         s = START + datetime.timedelta(days=dt)
         e = START + datetime.timedelta(days=dt + 1)
 
-        for cat in CATEGORIES.keys():
+        for cat in tqdm(sorted(CATEGORIES.keys()), desc="Categories"):
             response = None
             cursor = 0
 
@@ -58,7 +58,8 @@ if __name__ == '__main__':
 
                 if response and "Fin de la liste" in response.text:
                     break
-                if cursor > 4950:
+                if cursor > 20_000:
+                    print("Over 20k results, this seems strange, skipping")
                     print(s, e, cursor)
                     break
 
