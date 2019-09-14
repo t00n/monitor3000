@@ -1,4 +1,5 @@
 import re
+import os
 
 from bs4 import BeautifulSoup
 import unidecode
@@ -89,14 +90,27 @@ def parse_content(soup):
 
 
 def parse_prelude(text):
-    try:
-        prelude, _ = text.split('Article 1er.')
-    except:
-        prelude, _ = text.split('Article 1')
-    splitted = prelude.split('\n')
-    authority = splitted[0][:-1]
-    references = [x[:-1] for x in splitted[1:-2]]
-    return authority, references
+    prelude = None
+
+    for splitter in ['Article 1er.', 'Article 1.', 'Art. 1.', 'Convienne']:
+        try:
+            prelude, _ = text.split(splitter)
+            break
+        except:
+            pass
+
+    authorities = []
+    references = []
+    if prelude is not None:
+        splitted = prelude.split('\n')
+        i = 0
+        for line in splitted:
+            if line.startswith('Vu') or line.startswith('Considérant'):
+                break
+            authorities.append(line[:-1])
+            i += 1
+        references = [x[:-1] for x in splitted[i:-2]]
+    return authorities, references
 
 
 def parse_articles(text):
@@ -108,6 +122,9 @@ def parse_articles(text):
             i += 1
         elif line.startswith('Article 1.'):
             articles.append(line[11:] + '\n')
+            i += 1
+        elif line.startswith('Art. 1.'):
+            articles.append(line[9:] + '\n')
             i += 1
         else:
             match = re.match(r'Art.[\s\n]+\d+.', line)
@@ -133,7 +150,7 @@ class Document:
 
         # content
         self.content = parse_content(soup)
-        self.authority, self.references = parse_prelude(self.content)
+        self.authorities, self.references = parse_prelude(self.content)
         self.articles = parse_articles(self.content)
 
     def __str__(self):
@@ -144,9 +161,24 @@ if __name__ == '__main__':
     with open('raw/content/ARRETE MINISTERIEL/1997000605.html', 'rb') as f:
         doc = Document(f.read())
 
-    print("DATE", doc.date)
-    print("TITLE", doc.title)
-    print("CONTENT", doc.content)
-    print("AUTHORITY", doc.authority)
-    print("REFS", doc.references)
-    print("ARTICLES", doc.articles)
+    for dt in os.listdir("raw/content"):
+        dirname = os.path.join("raw", "content", dt)
+
+        for filename in os.listdir(dirname):
+            filename = os.path.join(dirname, filename)
+
+            print(filename)
+
+            with open(filename, 'rb') as f:
+                doc = Document(f.read())
+
+            print(doc)
+            print(doc.authorities)
+            print(doc.references)
+
+            # print("DATE", doc.date)
+            # print("TITLE", doc.title)
+            # print("CONTENT", doc.content)
+            # print("AUTHORITY", doc.authorities)
+            # print("REFS", doc.references)
+            # print("ARTICLES", doc.articles)
